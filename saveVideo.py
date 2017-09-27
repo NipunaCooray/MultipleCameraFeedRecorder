@@ -96,6 +96,6 @@ cap0.release()
 cap1.release()
 #cap2.release()
 #cap3.release()
-out1.release()
+
 #qout2.release()
 cv2.destroyAllWindows()

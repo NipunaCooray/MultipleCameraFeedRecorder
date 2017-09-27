@@ -9,6 +9,7 @@ Created on Wed Sep 27 14:16:29 2017
 from threading import Thread
 import cv2
 import imutils
+import numpy as np
 
 class WebcamVideoStream:
 
@@ -52,19 +53,37 @@ class WebcamVideoStream:
        
 
 vs = WebcamVideoStream(src=0).start()
-#vs2 = WebcamVideoStream(src=1).start()
+vs2 = WebcamVideoStream(src=1).start()
+
+frame_width = int(vs.stream.get(3))
+frame_height = int(vs.stream.get(4))
+
+output = np.zeros(( 450 , 600, 3), dtype="uint8")
+
+out1 = cv2.VideoWriter('threadResult.avi',-1, 60, (600,450))
 
 while(True):
-    frame = vs.read()
-#    frame2 = vs2.read()
-    frame = imutils.resize(frame, width=400)
-    cv2.imshow("Frame", frame)
+    frame1 = vs.read()
+    frame2 = vs2.read()
+    frame1 = imutils.resize(frame1, width=300,height=225)
+    frame2 = imutils.resize(frame2, width=300,height=225)
+
     
+#    cv2.imshow("Frame", frame1)
 #    cv2.imshow("Frame2", frame2)
+    
+    output[0:225 , 0:300] = frame1
+    output[0:225 , 300:600 ] = frame2
+    output[225:450 , 0:300] = frame1
+    output[225:450 , 300:600] = frame2
+    
+    out1.write(output)
+    cv2.imshow("Output",output)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
 cv2.destroyAllWindows()
 vs.stop()
-#vs2.stop()
+vs2.stop()
+out1.release()
