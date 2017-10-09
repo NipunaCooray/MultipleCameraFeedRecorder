@@ -10,6 +10,8 @@ from threading import Thread
 import cv2
 import imutils
 import numpy as np
+import time
+import datetime
 
 class WebcamVideoStream:
 
@@ -18,9 +20,10 @@ class WebcamVideoStream:
 		# from the stream
         self.frameSize = 300; 
         self.stream = cv2.VideoCapture(src)
+        
 
         (self.grabbed, self.frame) = self.stream.read()
-
+        
 
 		# initialize the variable used to indicate if the thread should
 		# be stopped
@@ -50,32 +53,68 @@ class WebcamVideoStream:
 		# indicate that the thread should be stopped
         self.stopped = True
         self.stream.release() 
-       
+    
+    def getFrameRate(self):
+        
+        # Number of frames to capture
+        num_frames = 120;
+         
+         
+        print "Capturing {0} frames".format(num_frames)
+         
+        # Start time
+        start = time.time()
+         
+        # Grab a few frames
+        for i in xrange(0, num_frames) :
+            ret, frame = self.stream.read()
+         
+         
+        # End time
+        end = time.time()
+         
+        # Time elapsed
+        seconds = end - start
+        print "Time taken : {0} seconds".format(seconds)
+         
+        # Calculate frames per second
+        fps  = num_frames / seconds;
+        print "Estimated frames per second : {0}".format(fps);
+        
+        self.stream.release()
+      
 
 vs = WebcamVideoStream(src=0).start()
-vs2 = WebcamVideoStream(src=1).start()
+#vs2 = WebcamVideoStream(src=1).start()
 
 frame_width = int(vs.stream.get(3))
 frame_height = int(vs.stream.get(4))
 
+
+
 output = np.zeros(( 450 , 600, 3), dtype="uint8")
 
-out1 = cv2.VideoWriter('threadResult.avi',-1, 60, (600,450))
+out1 = cv2.VideoWriter('threadResult.avi',-1, 30, (600,450))
+
+ts = time.time()
+st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
+
+
 
 while(True):
     frame1 = vs.read()
-    frame2 = vs2.read()
-    frame1 = imutils.resize(frame1, width=300,height=225)
-    frame2 = imutils.resize(frame2, width=300,height=225)
-
+#    frame2 = vs2.read()
+    frame1 = imutils.resize(frame1, width=300)
+#    frame2 = imutils.resize(frame2, width=300,height=225)
+    frame_size = frame1.shape
     
 #    cv2.imshow("Frame", frame1)
 #    cv2.imshow("Frame2", frame2)
     
     output[0:225 , 0:300] = frame1
-    output[0:225 , 300:600 ] = frame2
+    output[0:225 , 300:600 ] = frame1
     output[225:450 , 0:300] = frame1
-    output[225:450 , 300:600] = frame2
+    output[225:450 , 300:600] = frame1
     
     out1.write(output)
     cv2.imshow("Output",output)
@@ -85,5 +124,5 @@ while(True):
 
 cv2.destroyAllWindows()
 vs.stop()
-vs2.stop()
+
 out1.release()
