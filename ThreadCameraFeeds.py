@@ -43,7 +43,10 @@ class WebcamVideoStream:
 
             # otherwise, read the next frame from the stream
             (self.grabbed, self.frame) = self.stream.read()
-            
+    
+    def check(self):
+        return self.grabbed
+        
     
     def read(self):
 		# return the frame most recently read
@@ -57,7 +60,7 @@ class WebcamVideoStream:
     def getFrameRate(self):
         
         # Number of frames to capture
-        num_frames = 120;
+        num_frames = 30;
          
          
         print "Capturing {0} frames".format(num_frames)
@@ -80,21 +83,22 @@ class WebcamVideoStream:
         # Calculate frames per second
         fps  = num_frames / seconds;
         print "Estimated frames per second : {0}".format(fps);
-        
-        self.stream.release()
+        return fps
       
 
 vs = WebcamVideoStream(src=0).start()
 #vs2 = WebcamVideoStream(src=1).start()
 
+
 frame_width = int(vs.stream.get(3))
 frame_height = int(vs.stream.get(4))
 
-
+# Capturing frame rate
+rate = int(vs.getFrameRate())
 
 output = np.zeros(( 450 , 600, 3), dtype="uint8")
 
-out1 = cv2.VideoWriter('threadResult.avi',-1, 30, (600,450))
+out1 = cv2.VideoWriter('threadResult.avi',-1, rate*2, (600,450))
 
 ts = time.time()
 st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
@@ -102,25 +106,32 @@ st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
 
 
 while(True):
-    frame1 = vs.read()
-#    frame2 = vs2.read()
-    frame1 = imutils.resize(frame1, width=300)
-#    frame2 = imutils.resize(frame2, width=300,height=225)
-    frame_size = frame1.shape
+    grabbed1 = vs.check()
     
-#    cv2.imshow("Frame", frame1)
-#    cv2.imshow("Frame2", frame2)
+    if grabbed1==True:
     
-    output[0:225 , 0:300] = frame1
-    output[0:225 , 300:600 ] = frame1
-    output[225:450 , 0:300] = frame1
-    output[225:450 , 300:600] = frame1
+        frame1 = vs.read()
+    #    frame2 = vs2.read()
+        frame1 = imutils.resize(frame1, width=300)
+    #    frame2 = imutils.resize(frame2, width=300,height=225)
+        frame_size = frame1.shape
+        
+    #    cv2.imshow("Frame", frame1)
+    #    cv2.imshow("Frame2", frame2)
+        
+        output[0:225 , 0:300] = frame1
+        output[0:225 , 300:600 ] = frame1
+        output[225:450 , 0:300] = frame1
+        output[225:450 , 300:600] = frame1
+        
+        out1.write(output)
+        cv2.imshow("Output",output)
     
-    out1.write(output)
-    cv2.imshow("Output",output)
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
 
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
+    else:
+        break
 
 cv2.destroyAllWindows()
 vs.stop()
