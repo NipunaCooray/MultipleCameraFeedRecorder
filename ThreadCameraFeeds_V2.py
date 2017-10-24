@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Sep 27 14:16:29 2017
+Created on Tue Oct 24 08:57:12 2017
 
 @author: NipunaC
 """
@@ -12,6 +12,37 @@ import imutils
 import numpy as np
 import time
 import datetime
+
+class VideoWriter:
+    
+    def __init__(self):
+
+#        fourcc = cv2.cv.CV_FOURCC(*'XVID')
+        self.out1 = cv2.VideoWriter('threadResult.avi',-1, 80, (600,450))
+        self.writerStopped = False
+        self.output = np.zeros(( 450 , 600, 3), dtype="uint8")
+
+      
+    def start(self):
+        Thread(target=self.update, args=()).start()
+        return self 
+    
+    def update(self):
+        
+        while True:
+            if self.writerStopped :   
+                return
+
+            
+            # otherwise, read the next frame from the stream
+            if(np.any(self.output)):
+                self.out1.write(self.output)
+    
+    def stop(self):
+		# indicate that the thread should be stopped
+        self.writerStopped = True
+        self.out1.release()
+        
 
 class WebcamVideoStream:
 
@@ -89,6 +120,9 @@ class WebcamVideoStream:
 vs = WebcamVideoStream(src=0).start()
 #vs2 = WebcamVideoStream(src=1).start()
 
+videoWriter = VideoWriter().start()
+
+
 
 frame_width = int(vs.stream.get(3))
 frame_height = int(vs.stream.get(4))
@@ -96,7 +130,7 @@ frame_height = int(vs.stream.get(4))
 # Capturing frame rate
 rate = int(vs.getFrameRate())
 
-output = np.zeros(( 450 , 600, 3), dtype="uint8")
+#output = np.zeros(( 450 , 600, 3), dtype="uint8")
 
 fourcc = cv2.cv.CV_FOURCC(*'H264')
 #fourcc = -1
@@ -118,16 +152,19 @@ while(True):
     #    frame2 = imutils.resize(frame2, width=300,height=225)
         frame_size = frame1.shape
         
+        
     #    cv2.imshow("Frame", frame1)
     #    cv2.imshow("Frame2", frame2)
         
-        output[0:225 , 0:300] = frame1
-        output[0:225 , 300:600 ] = frame1
-        output[225:450 , 0:300] = frame1
-        output[225:450 , 300:600] = frame1
+        videoWriter.output[0:225 , 0:300] = frame1
+        videoWriter.output[0:225 , 300:600 ] = frame1
+        videoWriter.output[225:450 , 0:300] = frame1
+        videoWriter.output[225:450 , 300:600] = frame1
         
 #        out1.write(output)
-        cv2.imshow("Output",output)
+#        videoWriter.update()    
+            
+        cv2.imshow("Output",videoWriter.output)
     
         if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
@@ -137,5 +174,6 @@ while(True):
 
 cv2.destroyAllWindows()
 vs.stop()
+videoWriter.stop()
 
 #out1.release()
